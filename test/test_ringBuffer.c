@@ -1,12 +1,7 @@
 #include "unity.h"
 #include "ringBuffer.h"
 
-/**
- * Al remover un byte, debe retornar el primer byte pendiente de ser leido.
- * Al remover un byte, la cantidad de bytes pendientes debe reducirse en uno.
- * Permitir revisar el próximo byte a ser leido sin eliminarlo del ringBuffer
- * Permitir reiniciar el ringBuffer, poniendo en 0 los punteros de entrada/salida y la cantidad de bytes a leer
- */
+
 
 #define ARRAY_LEN       10
 #define BUFFER_DATA     0x28
@@ -87,4 +82,68 @@ void test_cantidad_bytes_pendientes (void)
     bytesPendientes = ringBuffer_getPending(&rb);
 
     TEST_ASSERT_EQUAL_UINT(3, bytesPendientes);
+}
+
+
+/* Al remover un byte, debe retornar el primer byte pendiente de ser leido */
+void test_primer_byte_leido (void) 
+{
+    uint8_t byteLeido = 0;
+
+    ringBuffer_put(&rb, BUFFER_DATA);
+    ringBuffer_put(&rb, BUFFER_DATA + 1);
+    ringBuffer_put(&rb, BUFFER_DATA + 2);
+
+    byteLeido = ringBuffer_remove(&rb);
+
+    TEST_ASSERT_EQUAL_UINT8(BUFFER_DATA, byteLeido);
+}
+
+
+/* Al remover un byte, la cantidad de bytes pendientes debe reducirse en uno */
+void test_bytes_pendientes_despues_de_ser_leidos (void) 
+{
+    uint32_t bytesPendientes = 0;
+
+    ringBuffer_put(&rb, BUFFER_DATA);
+    ringBuffer_put(&rb, BUFFER_DATA);
+    ringBuffer_put(&rb, BUFFER_DATA);
+
+    ringBuffer_remove(&rb);
+
+    bytesPendientes = ringBuffer_getPending(&rb);
+
+    TEST_ASSERT_EQUAL_UINT(2, bytesPendientes);
+}
+
+
+/* Permitir revisar el próximo byte a ser leido sin eliminarlo del ringBuffer */
+void test_revisar_sin_eliminar (void) 
+{
+    uint8_t byteLeido = 0;
+    uint32_t bytesPendientes = 0;
+
+    ringBuffer_put(&rb, BUFFER_DATA);
+    ringBuffer_put(&rb, BUFFER_DATA + 1);
+    ringBuffer_put(&rb, BUFFER_DATA + 2);
+
+    byteLeido = ringBuffer_peek(&rb);
+    bytesPendientes = ringBuffer_getPending(&rb);
+
+    TEST_ASSERT_EQUAL_UINT8(3, bytesPendientes);
+}
+
+
+/* Permitir reiniciar el ringBuffer, poniendo en 0 los punteros de entrada/salida y la cantidad de bytes a leer */
+void test_reiniciar_ring_buffer (void) 
+{
+    ringBuffer_put(&rb, BUFFER_DATA);
+    ringBuffer_put(&rb, BUFFER_DATA + 1);
+    ringBuffer_put(&rb, BUFFER_DATA + 2);
+
+    ringBuffer_flush(&rb);
+
+    TEST_ASSERT_EQUAL_UINT(0, rb.ptrIn);
+    TEST_ASSERT_EQUAL_UINT(0, rb.ptrOut);
+    TEST_ASSERT_EQUAL_UINT(0, rb.count);
 }
